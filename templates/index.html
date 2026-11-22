@@ -1,0 +1,1586 @@
+```html
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Asenkron Parfüm Veri Madencisi</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f5f7;
+            color: #222;
+        }
+
+        .header {
+            background: #111827;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0 0 8px;
+            font-size: 30px;
+        }
+
+        .header p {
+            margin: 0;
+            color: #cbd5e1;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            margin: 30px auto;
+        }
+
+        .kontrol-paneli {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        .api-butonu {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 13px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .api-butonu:hover {
+            background: #1d4ed8;
+        }
+
+        .api-butonu:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .istatistikler {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .kart {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .kart-baslik {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .kart-deger {
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        .durum {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        /* NOTA FİLTRESİ */
+
+        .filtre-baslik {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .nota-butonlari {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .nota-btn {
+            border: 1px solid #cbd5e1;
+            background: white;
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .nota-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .nota-btn.secili {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .eslesme {
+            margin-top: 15px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .filtre-kontrol {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .filtre-kontrol button {
+            padding: 9px 15px;
+            border-radius: 7px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .filtrele-btn {
+            background: #16a34a;
+            color: white;
+        }
+
+        .filtrele-btn:hover {
+            background: #15803d;
+        }
+
+        .temizle-btn {
+            background: #64748b;
+            color: white;
+        }
+
+        .temizle-btn:hover {
+            background: #475569;
+        }
+
+        /* TABLO */
+
+        .tablo-container {
+            background: white;
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        th {
+            background: #111827;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        td {
+            padding: 13px 15px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .urun-gorsel {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .gorsel-yok {
+            width: 80px;
+            height: 80px;
+            background: #e5e7eb;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .parfum-adi {
+            font-weight: bold;
+            min-width: 180px;
+        }
+
+        .notalar {
+            max-width: 450px;
+            line-height: 1.5;
+        }
+
+        .fiyat {
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .kaynak {
+            max-width: 250px;
+            word-break: break-all;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .kaynak a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        /* FİYAT SIRALAMA */
+
+        .siralama {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .siralama select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            background: white;
+        }
+
+        /* SAYFALAMA */
+
+        .sayfalama {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+
+        .sayfa-btn {
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .sayfa-btn:hover {
+            background: #f1f5f9;
+        }
+
+        .sayfa-btn.aktif {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .sayfa-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .sayfa-bilgi {
+            text-align: center;
+            color: #64748b;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 15px;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        @media (max-width: 800px) {
+
+            .istatistikler {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .container {
+                width: 98%;
+            }
+
+            .eslesme {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+
+    <h1>Asenkron Parfüm Veri Madencisi</h1>
+
+    <p>
+        httpx + asyncio + BeautifulSoup + Polars
+    </p>
+
+</div>
+
+
+<div class="container">
+
+    <!-- API -->
+
+    <div class="kontrol-paneli">
+
+        <button
+            id="cekButton"
+            class="api-butonu">
+
+            API ÇEK
+
+        </button>
+
+        <div
+            id="loading"
+            class="loading">
+
+            Veriler asenkron olarak çekiliyor...
+
+        </div>
+
+        <div
+            id="durum"
+            class="durum">
+
+            Henüz veri çekilmedi.
+
+        </div>
+
+    </div>
+
+
+    <!-- İSTATİSTİKLER -->
+
+    <div class="istatistikler">
+
+        <div class="kart">
+
+            <div class="kart-baslik">
+                Başarılı Sayfa
+            </div>
+
+            <div
+                id="sayfa"
+                class="kart-deger">
+
+                -
+
+            </div>
+
+        </div>
+
+
+        <div class="kart">
+
+            <div class="kart-baslik">
+                Toplam Parfüm
+            </div>
+
+            <div
+                id="urun"
+                class="kart-deger">
+
+                -
+
+            </div>
+
+        </div>
+
+
+        <div class="kart">
+
+            <div class="kart-baslik">
+                Çalışma Süresi
+            </div>
+
+            <div
+                id="sure"
+                class="kart-deger">
+
+                -
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- NOTA FİLTRESİ -->
+
+    <div class="kontrol-paneli">
+
+        <div class="filtre-baslik">
+            Nota Filtresi
+        </div>
+
+
+        <div class="nota-butonlari">
+
+            <button class="nota-btn" data-nota="vanilya">
+                Vanilya
+            </button>
+
+            <button class="nota-btn" data-nota="gül">
+                Gül
+            </button>
+
+            <button class="nota-btn" data-nota="kahve">
+                Kahve
+            </button>
+
+            <button class="nota-btn" data-nota="amber">
+                Amber
+            </button>
+
+            <button class="nota-btn" data-nota="sandal">
+                Sandal
+            </button>
+
+            <button class="nota-btn" data-nota="yasemin">
+                Yasemin
+            </button>
+
+            <button class="nota-btn" data-nota="bergamot">
+                Bergamot
+            </button>
+
+            <button class="nota-btn" data-nota="paçuli">
+                Paçuli
+            </button>
+
+            <button class="nota-btn" data-nota="tarçın">
+                Tarçın
+            </button>
+
+            <button class="nota-btn" data-nota="misk">
+                Misk
+            </button>
+
+            <button class="nota-btn" data-nota="safran">
+                Safran
+            </button>
+
+            <button class="nota-btn" data-nota="şeftali">
+                Şeftali
+            </button>
+
+            <button class="nota-btn" data-nota="hindistan cevizi">
+                Hindistan Cevizi
+            </button>
+
+        </div>
+
+
+        <div class="eslesme">
+
+            <label>
+
+                <input
+                    type="radio"
+                    name="eslesme"
+                    value="herhangi"
+                    checked>
+
+                Herhangi biri
+
+            </label>
+
+
+            <label>
+
+                <input
+                    type="radio"
+                    name="eslesme"
+                    value="hepsi">
+
+                Hepsi
+
+            </label>
+
+        </div>
+
+
+        <div class="filtre-kontrol">
+
+            <button
+                id="filtreleButton"
+                class="filtrele-btn">
+
+                Notaya Göre Getir
+
+            </button>
+
+
+            <button
+                id="temizleButton"
+                class="temizle-btn">
+
+                Filtreyi Temizle
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- TABLO -->
+
+    <div class="kontrol-paneli">
+
+        <div class="siralama">
+
+            <label for="fiyatSirala">
+                Fiyat:
+            </label>
+
+            <select id="fiyatSirala">
+
+                <option value="normal">
+                    Varsayılan
+                </option>
+
+                <option value="dusuk">
+                    Düşükten Yükseğe
+                </option>
+
+                <option value="yuksek">
+                    Yüksekten Düşüğe
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="tablo-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>#</th>
+
+                        <th>Fotoğraf</th>
+
+                        <th>Parfüm Adı</th>
+
+                        <th>Notalar</th>
+
+                        <th>Fiyat</th>
+
+                        <th>Kaynak</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="tablo">
+
+                    <tr>
+
+                        <td
+                            colspan="6"
+                            style="text-align:center; padding:40px;">
+
+                            Henüz veri yok.
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <div
+            id="sayfaBilgi"
+            class="sayfa-bilgi">
+        </div>
+
+
+        <div
+            id="sayfalama"
+            class="sayfalama">
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    /* =========================================================
+       DEĞİŞKENLER
+    ========================================================= */
+
+    let parfumVerileri = [];
+
+    let secilenNotalar = [];
+
+    let mevcutSayfa = 1;
+
+    const sayfaBasinaUrun = 10;
+
+
+    /* =========================================================
+       SAYFA AÇILDIĞINDA
+    ========================================================= */
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        /*
+         * API ÇEK
+         */
+
+        document
+            .getElementById("cekButton")
+            .addEventListener(
+                "click",
+                verileriCek
+            );
+
+
+        /*
+         * NOTA BUTONLARI
+         */
+
+        document
+            .querySelectorAll(".nota-btn")
+            .forEach(function (button) {
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        const nota =
+                            this.dataset.nota;
+
+
+                        /*
+                         * Daha önce seçiliyse
+                         * seçimden kaldır.
+                         */
+
+                        if (
+                            secilenNotalar
+                                .includes(nota)
+                        ) {
+
+                            secilenNotalar =
+                                secilenNotalar.filter(
+                                    item =>
+                                        item !== nota
+                                );
+
+                            this.classList.remove(
+                                "secili"
+                            );
+
+                        }
+
+                        /*
+                         * Seçili değilse ekle.
+                         */
+
+                        else {
+
+                            secilenNotalar.push(
+                                nota
+                            );
+
+                            this.classList.add(
+                                "secili"
+                            );
+
+                        }
+
+                        console.log(
+                            "Seçilen notalar:",
+                            secilenNotalar
+                        );
+
+                    }
+                );
+
+            });
+
+
+        /*
+         * NOTAYA GÖRE GETİR
+         */
+
+        document
+            .getElementById("filtreleButton")
+            .addEventListener(
+                "click",
+                filtreUygula
+            );
+
+
+        /*
+         * FİLTREYİ TEMİZLE
+         */
+
+        document
+            .getElementById("temizleButton")
+            .addEventListener(
+                "click",
+                filtreTemizle
+            );
+
+
+        /*
+         * FİYAT SIRALAMA
+         */
+
+        document
+            .getElementById("fiyatSirala")
+            .addEventListener(
+                "change",
+                fiyatSirala
+            );
+
+    });
+
+
+    /* =========================================================
+       API ÇEK
+    ========================================================= */
+
+    async function verileriCek() {
+
+        await apiIstegi([]);
+
+    }
+
+
+    /* =========================================================
+       API İSTEĞİ
+    ========================================================= */
+
+    async function apiIstegi(notalar) {
+
+        const button =
+            document.getElementById(
+                "cekButton"
+            );
+
+        const loading =
+            document.getElementById(
+                "loading"
+            );
+
+        const durum =
+            document.getElementById(
+                "durum"
+            );
+
+
+        button.disabled = true;
+
+        loading.style.display = "block";
+
+
+        durum.innerText =
+            "Veriler çekiliyor, lütfen bekleyin...";
+
+
+        try {
+
+            let url = "/api/cek";
+
+
+            /*
+             * Nota seçildiyse API'ye gönder.
+             */
+
+            if (notalar.length > 0) {
+
+                const eslesme =
+                    document.querySelector(
+                        'input[name="eslesme"]:checked'
+                    ).value;
+
+
+                const params =
+                    new URLSearchParams();
+
+
+                params.set(
+                    "notalar",
+                    notalar.join(",")
+                );
+
+
+                params.set(
+                    "eslesme",
+                    eslesme
+                );
+
+
+                url += "?" + params.toString();
+
+            }
+
+
+            console.log(
+                "API isteği:",
+                url
+            );
+
+
+            const response =
+                await fetch(url);
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.hata ||
+                    "API isteği başarısız."
+                );
+
+            }
+
+
+            /*
+             * Gelen verileri kaydet.
+             */
+
+            parfumVerileri =
+                data.veriler || [];
+
+
+            /*
+             * İlk sayfaya dön.
+             */
+
+            mevcutSayfa = 1;
+
+
+            /*
+             * İstatistikleri güncelle.
+             */
+
+            document.getElementById(
+                "sayfa"
+            ).innerText =
+
+                data.basarili_sayfa +
+                "/" +
+                data.toplam_sayfa;
+
+
+            document.getElementById(
+                "urun"
+            ).innerText =
+
+                data.toplam_urun;
+
+
+            document.getElementById(
+                "sure"
+            ).innerText =
+
+                data.sure +
+                " sn";
+
+
+            durum.innerText =
+
+                data.toplam_urun +
+                " parfüm başarıyla getirildi.";
+
+
+            /*
+             * Tabloyu göster.
+             */
+
+            tabloyuGoster(
+                parfumVerileri
+            );
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "API HATASI:",
+                error
+            );
+
+
+            durum.innerText =
+                "Hata: " +
+                error.message;
+
+        }
+
+
+        button.disabled = false;
+
+        loading.style.display = "none";
+
+    }
+
+
+    /* =========================================================
+       NOTA FİLTRESİ
+    ========================================================= */
+
+    async function filtreUygula() {
+
+        console.log(
+            "Filtre uygulanıyor:",
+            secilenNotalar
+        );
+
+
+        /*
+         * Hiç nota seçilmediyse
+         */
+
+        if (
+            secilenNotalar.length === 0
+        ) {
+
+            alert(
+                "Lütfen en az bir nota seçin."
+            );
+
+            return;
+
+        }
+
+
+        await apiIstegi(
+            secilenNotalar
+        );
+
+    }
+
+
+    /* =========================================================
+       FİLTREYİ TEMİZLE
+    ========================================================= */
+
+    async function filtreTemizle() {
+
+        /*
+         * Seçilen notaları sıfırla.
+         */
+
+        secilenNotalar = [];
+
+
+        /*
+         * Mavi butonları temizle.
+         */
+
+        document
+            .querySelectorAll(".nota-btn")
+            .forEach(function (button) {
+
+                button.classList.remove(
+                    "secili"
+                );
+
+            });
+
+
+        /*
+         * Fiyat sıralamasını varsayılana getir.
+         */
+
+        document.getElementById(
+            "fiyatSirala"
+        ).value = "normal";
+
+
+        /*
+         * Tüm verileri tekrar getir.
+         */
+
+        await verileriCek();
+
+    }
+
+
+    /* =========================================================
+       FİYAT SIRALAMA
+    ========================================================= */
+
+    function fiyatSirala() {
+
+        const secim =
+            document.getElementById(
+                "fiyatSirala"
+            ).value;
+
+
+        let siraliVeriler =
+            [...parfumVerileri];
+
+
+        if (secim === "dusuk") {
+
+            siraliVeriler.sort(
+                function (a, b) {
+
+                    return (
+                        Number(a.fiyat || 0) -
+                        Number(b.fiyat || 0)
+                    );
+
+                }
+            );
+
+        }
+
+
+        else if (secim === "yuksek") {
+
+            siraliVeriler.sort(
+                function (a, b) {
+
+                    return (
+                        Number(b.fiyat || 0) -
+                        Number(a.fiyat || 0)
+                    );
+
+                }
+            );
+
+        }
+
+
+        mevcutSayfa = 1;
+
+
+        tabloyuGoster(
+            siraliVeriler
+        );
+
+    }
+
+
+    /* =========================================================
+       TABLOYU GÖSTER
+    ========================================================= */
+
+    function tabloyuGoster(veriler) {
+
+        const tablo =
+            document.getElementById(
+                "tablo"
+            );
+
+
+        if (
+            !veriler ||
+            veriler.length === 0
+        ) {
+
+            tablo.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        style="
+                            text-align:center;
+                            padding:40px;
+                        ">
+
+                        Sonuç bulunamadı.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+
+            document.getElementById(
+                "sayfalama"
+            ).innerHTML = "";
+
+
+            document.getElementById(
+                "sayfaBilgi"
+            ).innerText = "";
+
+
+            return;
+
+        }
+
+
+        /*
+         * Toplam sayfa.
+         */
+
+        const toplamSayfa =
+            Math.ceil(
+                veriler.length /
+                sayfaBasinaUrun
+            );
+
+
+        /*
+         * Sayfa sınırı.
+         */
+
+        if (
+            mevcutSayfa >
+            toplamSayfa
+        ) {
+
+            mevcutSayfa =
+                toplamSayfa;
+
+        }
+
+
+        const baslangic =
+            (mevcutSayfa - 1) *
+            sayfaBasinaUrun;
+
+
+        const bitis =
+            baslangic +
+            sayfaBasinaUrun;
+
+
+        const sayfadakiVeriler =
+            veriler.slice(
+                baslangic,
+                bitis
+            );
+
+
+        tablo.innerHTML = "";
+
+
+        /*
+         * Ürünleri oluştur.
+         */
+
+        sayfadakiVeriler.forEach(
+            function (parfum, index) {
+
+                const sira =
+                    baslangic +
+                    index +
+                    1;
+
+
+                /*
+                 * FOTOĞRAF
+                 */
+
+                let gorselHTML = `
+
+                    <div class="gorsel-yok">
+                        Görsel yok
+                    </div>
+
+                `;
+
+
+                if (parfum.gorsel) {
+
+                    gorselHTML = `
+
+                        <img
+                            src="${parfum.gorsel}"
+                            alt="${parfum.parfum_adi || "Parfüm"}"
+                            class="urun-gorsel"
+                            loading="lazy"
+                            onerror="
+                                this.style.display='none';
+                                this.nextElementSibling.style.display='flex';
+                            "
+                        >
+
+                        <div
+                            class="gorsel-yok"
+                            style="display:none;">
+
+                            Görsel yüklenemedi
+
+                        </div>
+
+                    `;
+
+                }
+
+
+                /*
+                 * FİYAT
+                 */
+
+                let fiyat = "-";
+
+
+                if (
+                    parfum.fiyat !== null &&
+                    parfum.fiyat !== undefined
+                ) {
+
+                    fiyat =
+                        Number(
+                            parfum.fiyat
+                        ).toLocaleString(
+                            "tr-TR",
+                            {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }
+                        ) +
+                        " TL";
+
+                }
+
+
+                /*
+                 * SATIR
+                 */
+
+                const satir =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                satir.innerHTML = `
+
+                    <td>
+                        ${sira}
+                    </td>
+
+                    <td>
+                        ${gorselHTML}
+                    </td>
+
+                    <td class="parfum-adi">
+                        ${parfum.parfum_adi || "-"}
+                    </td>
+
+                    <td class="notalar">
+                        ${parfum.notalar || "-"}
+                    </td>
+
+                    <td class="fiyat">
+                        ${fiyat}
+                    </td>
+
+                    <td class="kaynak">
+
+                        ${
+                            parfum.kaynak
+                            ?
+                            `<a
+                                href="${parfum.kaynak}"
+                                target="_blank">
+
+                                Ürünü Aç
+
+                            </a>`
+                            :
+                            "-"
+                        }
+
+                    </td>
+
+                `;
+
+
+                tablo.appendChild(
+                    satir
+                );
+
+            }
+        );
+
+
+        /*
+         * SAYFA BİLGİSİ
+         */
+
+        const ilk =
+            baslangic + 1;
+
+
+        const son =
+            Math.min(
+                bitis,
+                veriler.length
+            );
+
+
+        document.getElementById(
+            "sayfaBilgi"
+        ).innerText =
+
+            `${veriler.length} sonuçtan ` +
+            `${ilk}-${son} arası gösteriliyor`;
+
+
+        /*
+         * SAYFALAMA
+         */
+
+        sayfalamaOlustur(
+            toplamSayfa,
+            veriler
+        );
+
+    }
+
+
+    /* =========================================================
+       SAYFALAMA
+    ========================================================= */
+
+    function sayfalamaOlustur(
+        toplamSayfa,
+        veriler
+    ) {
+
+        const alan =
+            document.getElementById(
+                "sayfalama"
+            );
+
+
+        alan.innerHTML = "";
+
+
+        /*
+         * ÖNCEKİ
+         */
+
+        const onceki =
+            document.createElement(
+                "button"
+            );
+
+
+        onceki.className =
+            "sayfa-btn";
+
+
+        onceki.innerText =
+            "‹ Önceki";
+
+
+        onceki.disabled =
+            mevcutSayfa === 1;
+
+
+        onceki.addEventListener(
+            "click",
+            function () {
+
+                if (
+                    mevcutSayfa > 1
+                ) {
+
+                    mevcutSayfa--;
+
+                    tabloyuGoster(
+                        veriler
+                    );
+
+                    window.scrollTo({
+                        top: 0,
+                        behavior: "smooth"
+                    });
+
+                }
+
+            }
+        );
+
+
+        alan.appendChild(
+            onceki
+        );
+
+
+        /*
+         * SAYFA NUMARALARI
+         */
+
+        for (
+            let i = 1;
+            i <= toplamSayfa;
+            i++
+        ) {
+
+            const buton =
+                document.createElement(
+                    "button"
+                );
+
+
+            buton.className =
+                "sayfa-btn";
+
+
+            buton.innerText =
+                i;
+
+
+            if (
+                i === mevcutSayfa
+            ) {
+
+                buton.classList.add(
+                    "aktif"
+                );
+
+            }
+
+
+            buton.addEventListener(
+                "click",
+                function () {
+
+                    mevcutSayfa = i;
+
+                    tabloyuGoster(
+                        veriler
+                    );
+
+                    window.scrollTo({
+                        top: 0,
+                        behavior: "smooth"
+                    });
+
+                }
+            );
+
+
+            alan.appendChild(
+                buton
+            );
+
+        }
+
+
+        /*
+         * SONRAKİ
+         */
+
+        const sonraki =
+            document.createElement(
+                "button"
+            );
+
+
+        sonraki.className =
+            "sayfa-btn";
+
+
+        sonraki.innerText =
+            "Sonraki ›";
+
+
+        sonraki.disabled =
+            mevcutSayfa === toplamSayfa;
+
+
+        sonraki.addEventListener(
+            "click",
+            function () {
+
+                if (
+                    mevcutSayfa <
+                    toplamSayfa
+                ) {
+
+                    mevcutSayfa++;
+
+                    tabloyuGoster(
+                        veriler
+                    );
+
+                    window.scrollTo({
+                        top: 0,
+                        behavior: "smooth"
+                    });
+
+                }
+
+            }
+        );
+
+
+        alan.appendChild(
+            sonraki
+        );
+
+    }
+
+</script>
+
+</body>
+</html>
+```
